@@ -16,6 +16,7 @@
     "egg-sequelize": "^5.2.0",
     "egg-socket.io": "^4.1.6",
     "jsonwebtoken": "^8.5.1",
+    "log4js": "^6.0.0",
     "mysql2": "^2.0.0",
     "tic-lib": "^1.0.4"
   },

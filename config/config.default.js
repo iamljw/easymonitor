@@ -112,6 +112,7 @@ module.exports = appInfo => {
             },
             domainWhiteList: ['', '127.0.0.1', '0.0.0.0']
         },
+        secret: 'Dpj985dHt5wLaAbIz1PpaEZKP1ApUXat',
         // egg-error-handler
         errorHandler2: {
             protection: true,
