@@ -1,6 +1,8 @@
 'use strict';
 
 const { Subscription } = require('egg');
+const randomString = require('random-string');
+const fs = require('fs');
 
 class StartupWorker extends Subscription {
     // 通过 schedule 属性来设置定时任务的执行间隔等配置
@@ -22,6 +24,29 @@ class StartupWorker extends Subscription {
         }, {
             where: {
                 state: 1
+            }
+        });
+        // ------------ 日志归档目录 ------------
+        if (!fs.existsSync('./app/logs')) {
+            fs.mkdirSync('./app/logs');
+        }
+        // ------------ 初始化超级管理员 ------------
+        await this.initRoot();
+    }
+    async initRoot() {
+        const { ctx, app, config } = this;
+        let { loginName, loginPass } = config.rootAccount;
+        const salt = randomString({ length: 6 });
+        loginPass = app.hmac(loginPass, salt);
+        await ctx.model.account.findOrCreate({
+            where: {
+                role: 'root'
+            },
+            defaults: {
+                loginName,
+                loginPass,
+                salt,
+                role: 'root'
             }
         });
     }

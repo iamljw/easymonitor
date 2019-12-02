@@ -15,9 +15,11 @@
     "egg-scripts": "^2.11.0",
     "egg-sequelize": "^5.2.0",
     "egg-socket.io": "^4.1.6",
+    "egg-validate": "^2.0.2",
     "jsonwebtoken": "^8.5.1",
     "log4js": "^6.0.0",
     "mysql2": "^2.0.0",
+    "random-string": "^0.2.0",
     "tic-lib": "^1.0.4"
   },
   "devDependencies": {

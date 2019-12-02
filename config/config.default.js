@@ -7,6 +7,8 @@ const {
     clientError: { ClientError },
     resourceError: { ResourceError }
 } = require('tic-lib');
+const privilege = require('./privilege');
+const rules = require('./rules');
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -22,13 +24,15 @@ module.exports = appInfo => {
     config.keys = appInfo.name + '_1572159424111_6833';
 
     // add your middleware config here
-    config.middleware = [];
+    config.middleware = ['auth'];
 
-    config.auth = { // 身份认证
+    config.auth = {
         enable: true,
         ignore(ctx) {
             const urlpath = ctx.request.url;
-            const interfaces = [];
+            const interfaces = [
+                '/account/login'
+            ];
             const arg = interfaces.reduce((a, b) => a + `|(^/api/v1${b}$)`, '(^/$)');
             const reg = new RegExp(arg);
             return reg.test(urlpath);
@@ -113,6 +117,10 @@ module.exports = appInfo => {
             domainWhiteList: ['', '127.0.0.1', '0.0.0.0']
         },
         secret: 'Dpj985dHt5wLaAbIz1PpaEZKP1ApUXat',
+        rootAccount: {
+            loginName: 'root',
+            loginPass: '123456'
+        },
         // egg-error-handler
         errorHandler2: {
             protection: true,
@@ -123,6 +131,8 @@ module.exports = appInfo => {
 
     return {
         ...config,
-        ...userConfig
+        ...userConfig,
+        privilege,
+        rules
     };
 };

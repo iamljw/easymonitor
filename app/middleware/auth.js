@@ -1,13 +1,20 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
-const { LoginRequiredError } = require('tic-lib').resourceError;
+const {
+    resourceError: {
+        LoginRequiredError,
+        PermissionDeniedError
+    }
+} = require('tic-lib');
 const crypto = require('crypto');
+
 
 module.exports = () => {
     return async (ctx, next) => {
+        const { secret, privilege } = ctx.app.config;
+        // ------------ 身份验证 ------------
         const token = ctx.get('Authorization');
-        const { secret } = ctx.app.config;
         let payload = {};
         try {
             payload = jwt.verify(token, secret);
@@ -35,6 +42,14 @@ module.exports = () => {
         }
         ctx.uid = payload.uid;
         ctx.account = account;
+        // ------------ 接口权限 ------------
+        const { url } = ctx.request;
+        if (!privilege.common.some(path => url.startsWith(path))) {
+            const { role } = ctx.account;
+            if (role !== 'root' && !privilege[role].some(path => url.startsWith(path))) {
+                throw new PermissionDeniedError();
+            }
+        }
         await next();
     };
 };
