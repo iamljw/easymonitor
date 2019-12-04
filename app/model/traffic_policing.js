@@ -49,7 +49,7 @@ module.exports = app => {
         },
         status: {
             type: INTEGER,
-            comment: '响应状态 -1:bug 0:警告 1:成功'
+            comment: '响应状态 -1:bug 0:处理中 1:超时 2:成功'
         },
         responseBody: {
             type: TEXT,

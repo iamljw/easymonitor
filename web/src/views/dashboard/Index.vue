@@ -13,6 +13,7 @@
                     <Option value="5">每5秒刷新</Option>
                     <Option value="10">每10秒刷新</Option>
                     <Option value="30">每30秒刷新</Option>
+                    <Option value="-1">不刷新</Option>
                 </Select>
             </div>
             <div>
@@ -37,13 +38,13 @@
             4. 正常 异常服务数量
             5. 请求记录
             -->
-        <TabPane label="概览">
+        <TabPane label="概览" class="overview-pane">
             <div class="traffic-policing-title-w">
                 <span>Overview</span>
             </div>
             <Collapse v-model="panel1">
                 <Panel name="traffic">
-                    Totals
+                    Charts
                     <Row slot="content">
                         <Col span="12" id="line-chart-col">
                             <div class="selector-w">
@@ -86,16 +87,49 @@
                     </Row>
                 </Panel>
             </Collapse>
+            <!-- :row-class-name="rowClassName" -->
+            <Table
+                :columns="columns"
+                :data="requestData"
+            >
+                <template slot-scope="{ row }" slot="method">
+                    <div
+                        :class="['req-method', row.method]"
+                    >
+                        {{row.method.toUpperCase()}}
+                    </div>
+                </template>
+                <template slot-scope="{ row }" slot="status">
+                    <Badge :status="reqStatus[row.status].key" />
+                    {{reqStatus[row.status].text}}
+                </template>
+                <template slot-scope="{ row }" slot="costTime">
+                    <span
+                        :style="{fontSize:'12px',color:row.costTime <= 1000 ? '#19be6b':'#ff9900'}"
+                    >{{row.costTime}}ms</span>
+                </template>
+                <template slot-scope="{ row }" slot="action">
+                    <Button type="primary" size="small" style="margin-right: 5px">{{row.zz}}重试</Button>
+                    <Button type="warning" size="small">标记</Button>
+                </template>
+            </Table>
+            <BackTop/>
         </TabPane>
-        <TabPane label="服务">标签二的内容</TabPane>
+        <TabPane label="服务">
+            服务
+        </TabPane>
         <TabPane label="日志">标签三的内容</TabPane>
         <TabPane label="管理">标签三的内容</TabPane>
     </Tabs>
 </div>
 </template>
 <script>
+import ReqDetails from '@/components/ReqDetails'
 export default {
     name: 'Index',
+    components: {
+        ReqDetails
+    },
     data () {
         this.lineExtend = {
             'xAxis.0.axisLabel.rotate': 45
@@ -107,15 +141,28 @@ export default {
                 error: '错误请求次数'
             }
         },
-        this.pieChartSettings = {
-            // labelMap: {
-            //     serviceName: '服务名称',
-            //     count: '累计请求'
-            // }
-        }
+        this.pieChartSettings = {}
         return {
             refreshInterval: '5',
             panel1: 'traffic',
+            reqStatus: {
+                '-1': {
+                    key: 'error',
+                    text: 'bug'
+                },
+                '0': {
+                    key: 'processing',
+                    text: '处理中'
+                },
+                '1': {
+                    key: 'warning',
+                    text: '超时'
+                },
+                '2': {
+                    key: 'success',
+                    text: '成功'
+                }
+            },
             lineChartData: {
                 columns: ['dt', 'total', 'timeout', 'error'],
                 rows: [
@@ -138,17 +185,116 @@ export default {
                     { 'serviceName': 'api-blockchain', 'count': 4593 },
                     { 'serviceName': 'api-msg', 'count': 459 }
                 ]
-            }
+            },
+            columns: [
+                {
+                    type: 'expand',
+                    width: 50,
+                    render: (h, params) => {
+                        return h(ReqDetails, {
+                            props: {
+                                row: params.row
+                            }
+                        })
+                    }
+                },
+                {
+                    title: 'ID',
+                    key: 'id',
+                    width: 90
+                },
+                {
+                    title: 'SID',
+                    key: 'sid',
+                    width: 60
+                },
+                {
+                    title: '服务名称',
+                    key: 'sname',
+                    width: 100,
+                    tooltip: true
+                },
+                {
+                    title: '请求方式',
+                    slot: 'method',
+                    width: 100
+                },
+                {
+                    title: '接口路径',
+                    key: 'path',
+                    width: 250,
+                    tooltip: true,
+                    className: 'url'
+                },
+                {
+                    title: '请求头',
+                    key: 'headers',
+                    tooltip: true
+                },
+                {
+                    title: '字符串参数',
+                    key: 'queryStrParams',
+                    tooltip: true
+                },
+                {
+                    title: '请求体参数',
+                    key: 'requestBody',
+                    tooltip: true
+                },
+                {
+                    title: '响应体',
+                    key: 'responseBody',
+                    tooltip: true
+                },
+                {
+                    title: '响应状态',
+                    slot: 'status',
+                    width: 100
+                },
+                {
+                    title: '响应时长',
+                    slot: 'costTime',
+                    width: 70
+                },
+                {
+                    title: 'Action',
+                    slot: 'action',
+                    fixed: 'right',
+                    width: 150
+                }
+            ],
+            requestData: new Array(10).fill(0).map(() => {
+                return {
+                    id: 423982,
+                    sid: 1,
+                    sname: '积分',
+                    method: 'get',
+                    path: '/api/v1/market/eth/price/test/asd/dddd',
+                    headers: '{Authorization:sadkh123kj1223zzkxj}',
+                    queryStrParams: '{}',
+                    requestBody: '{}',
+                    status: 2,
+                    responseBody: '{}',
+                    costTime: 32
+                };
+            })
         }
     },
     methods: {
         logout() {
 
+        },
+        rowClassName (row, index) {
+            if (index % 2 === 0) {
+                return 'table-blue-row';
+            } else {
+                return '';
+            }
         }
     }
 }
 </script>
-<style scoped lang="scss">
+<style lang="scss">
 .top-w {
     display: flex;
     justify-content: space-between;
@@ -187,12 +333,14 @@ export default {
     }
 }
 .tabs {
-    margin: 0 32px;
-    .traffic-policing-title-w {
-        text-align: left;
-        font-size: 1.6em;
-        color: #484848;
-        line-height: 32px;
+    margin: 0 32px 48px 32px;
+    .overview-pane {
+        .traffic-policing-title-w {
+            text-align: left;
+            font-size: 1.6em;
+            color: #484848;
+            line-height: 32px;
+        }
     }
 }
 #line-chart-col {
@@ -213,5 +361,40 @@ export default {
     div {
         margin-right: 16px;
     }
+}
+.ivu-table .table-blue-row td{
+    background-color: #5cadff;
+    color: #fff;
+}
+.ivu-table .table-green-row td{
+    background-color: #19be6b;
+    color: #fff;
+}
+.ivu-table td.url{
+    cursor: pointer;
+    color: #2b85e4;
+}
+.req-method {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 10px;
+}
+.get {
+    background-color: #cfefdf;
+    color: #00A854;
+}
+.post {
+    background-color: #D2EAFB;
+    color: #108EE9;
+}
+.put {
+    background-color: #FFF3CF;
+    color: #FFBF00;
+}
+.delete {
+    background-color: #FCDBD9;
+    color: #F04134;
 }
 </style>
