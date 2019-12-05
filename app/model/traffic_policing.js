@@ -58,6 +58,10 @@ module.exports = app => {
         costTime: {
             type: INTEGER,
             comment: '响应时长(单位:毫秒)'
+        },
+        comment: {
+            type: STRING,
+            comment: '备注'
         }
     }, {
         indexes: [

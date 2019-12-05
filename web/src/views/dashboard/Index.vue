@@ -49,7 +49,9 @@
                         <Col span="12" id="line-chart-col">
                             <div class="selector-w">
                                 流量统计
-                                <a id="period-a" @click="logout" style="marginRight:8px;">最近24小时</a>
+                                <a id="period-a" @click="drawerVisible = true" style="marginRight:8px;">
+                                    {{periodMap[period]}}
+                                </a>
                                 平均响应时长<span style="fontSize:12px;marginLeft:4px;color:#19be6b">32ms</span>
                             </div>
                             <ve-line
@@ -87,11 +89,51 @@
                     </Row>
                 </Panel>
             </Collapse>
+            <Drawer
+                title="选择时段"
+                placement="left"
+                :closable="true"
+                v-model="drawerVisible">
+                <RadioGroup v-model="period" vertical>
+                    <Radio label="24hour">
+                        <!-- <Icon type="social-apple"></Icon> -->
+                        <span>最近24小时</span>
+                    </Radio>
+                    <Radio label="lastMonth">
+                        <!-- <Icon type="social-android"></Icon> -->
+                        <span>最近一个月</span>
+                    </Radio>
+                    <Radio label="halfYear">
+                        <!-- <Icon type="social-windows"></Icon> -->
+                        <span>最近半年</span>
+                    </Radio>
+                </RadioGroup>
+            </Drawer>
             <!-- :row-class-name="rowClassName" -->
+            <!-- 搜索栏 id、服务、接口、响应状态 -->
+            <div class="search-con" style="marginTop:0;">
+                精准搜索：
+                <Input @on-change="handleClear" clearable placeholder="输入请求ID" style="width:150px;marginRight:8px;" v-model="searchFields.id"/>
+                选择服务：
+                <Select v-model="searchFields.service" class="search-col" style="width:100px;marginRight:8px;">
+                    <Option value="all">全部</Option>
+                    <Option v-for="(val,key) in services" :value="key" :key="`search-col-${key}`">{{ val.text }}</Option>
+                </Select>
+                接口路径：
+                <Input @on-change="handleClear" clearable placeholder="输入接口路径片段" style="width:150px;marginRight:8px;" v-model="searchFields.path"/>
+                响应状态：
+                <Select v-model="searchFields.status" class="search-col" style="width:100px;marginRight:8px;">
+                    <Option value="all">全部</Option>
+                    <Option v-for="(val,key) in reqStatus" :value="Number(key)" :key="`search-col-${key}`">
+                        {{ val.text }}
+                    </Option>
+                </Select>
+                <Button @click="handleSearch" class="search-btn" type="primary"><Icon type="md-search" />&nbsp;&nbsp;搜索</Button>
+                <Button @click="resetSearch" class="search-btn" type="primary" style="marginLeft:8px;">重置</Button>
+            </div>
             <Table
                 :columns="columns"
-                :data="requestData"
-            >
+                :data="requestData.rows">
                 <template slot-scope="{ row }" slot="method">
                     <div
                         :class="['req-method', row.method]"
@@ -110,9 +152,36 @@
                 </template>
                 <template slot-scope="{ row }" slot="action">
                     <Button type="primary" size="small" style="margin-right: 5px">{{row.zz}}重试</Button>
-                    <Button type="warning" size="small">标记</Button>
+                    <Button type="warning" size="small" @click="onMarkClick(row)">标记</Button>
                 </template>
             </Table>
+            <!-- 分页 -->
+            <Page :total="requestData.count" @on-change="pageChange" show-elevator show-total style="marginTop:10px;"/>
+            <!-- 标记编辑框 -->
+            <Modal
+                v-model="markVisible"
+                :title="`标记请求(ID:${tmpReq.id})`"
+                @on-ok="markVisible = false"
+                @on-cancel="markVisible = false">
+                响应状态:
+                <Select v-model="tmpStatus" style="width:100px;">
+                    <Option v-for="(val,key) in reqStatus" :value="Number(key)" :key="`search-col-${key}`">
+                        {{ val.text }}
+                    </Option>
+                </Select>
+                <div style="marginTop:24px;display:flex;alignItem:center;">
+                    备注:
+                    <Input
+                        type="textarea"
+                        maxlength="255"
+                        :autosize="{minRows: 4,maxRows: 8}"
+                        show-word-limit
+                        v-model="reqComment"
+                        placeholder="input something"
+                        style="marginLeft:4px;width: 400px"
+                    />
+                </div>
+            </Modal>
             <BackTop/>
         </TabPane>
         <TabPane label="服务">
@@ -144,7 +213,22 @@ export default {
         this.pieChartSettings = {}
         return {
             refreshInterval: '5',
+            period: '24hour',
+            periodMap: {
+                '24hour': '最近24小时',
+                'lastMonth': '最近一个月',
+                'halfYear': '最近半年'
+            },
             panel1: 'traffic',
+            drawerVisible: false,
+            searchFields: {
+                service: 'all',
+                status: 'all'
+            },
+            markVisible: false,
+            tmpReq: {},
+            tmpStatus: 2,
+            reqComment: '',
             reqStatus: {
                 '-1': {
                     key: 'error',
@@ -160,7 +244,7 @@ export default {
                 },
                 '2': {
                     key: 'success',
-                    text: '成功'
+                    text: '正常'
                 }
             },
             lineChartData: {
@@ -263,21 +347,34 @@ export default {
                     width: 150
                 }
             ],
-            requestData: new Array(10).fill(0).map(() => {
-                return {
-                    id: 423982,
-                    sid: 1,
-                    sname: '积分',
-                    method: 'get',
-                    path: '/api/v1/market/eth/price/test/asd/dddd',
-                    headers: '{Authorization:sadkh123kj1223zzkxj}',
-                    queryStrParams: '{}',
-                    requestBody: '{}',
-                    status: 2,
-                    responseBody: '{}',
-                    costTime: 32
-                };
-            })
+            requestData: {
+                count: 213,
+                rows: new Array(10).fill(0).map(() => {
+                    return {
+                        id: 423982,
+                        sid: 1,
+                        sname: '积分',
+                        method: 'get',
+                        path: '/api/v1/market/eth/price/test/asd/dddd',
+                        headers: `{
+                            "Authorization":"sadkh123kj1223zzkxj",
+                            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.84 Safari/537.36"
+                        }`,
+                        queryStrParams: '{"page":1,"size":10}',
+                        requestBody: '{"name":"张三","age":23}',
+                        status: 2,
+                        responseBody: `{
+                            "success":true,
+                            "code": 200,
+                            "data":{
+                                "count":0,
+                                "rows":[]
+                            }
+                        }`,
+                        costTime: 32
+                    };
+                })
+            }
         }
     },
     methods: {
@@ -290,6 +387,19 @@ export default {
             } else {
                 return '';
             }
+        },
+        onMarkClick(row) {
+            this.tmpReq = row;
+            this.markVisible = true;
+        },
+        pageChange() {
+
+        },
+        resetSearch() {
+            this.searchFields = {
+                service: 'all',
+                status: 'all'
+            };
         }
     }
 }
