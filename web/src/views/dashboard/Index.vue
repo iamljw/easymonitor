@@ -39,7 +39,7 @@
             5. 请求记录
             -->
         <TabPane label="概览" class="overview-pane">
-            <div class="traffic-policing-title-w">
+            <div class="top-title-w">
                 <span>Overview</span>
             </div>
             <Collapse v-model="panel1">
@@ -185,7 +185,85 @@
             <BackTop/>
         </TabPane>
         <TabPane label="服务">
-            服务
+            <div class="top-title-w">
+                <span>Services</span>
+            </div>
+            <!-- 
+                0. id
+                1. socket
+                2. name
+                3. state
+                4. comment
+                5. access log
+             -->
+            <div class="services-filter-header" @click="servicesFilter = !servicesFilter">
+                <Icon v-if="!servicesFilter" type="md-arrow-dropright" size="22" color="#808695"/>
+                <Icon v-else type="md-arrow-dropdown" size="22" color="#808695"/>
+                All services ({{services.count}})
+            </div>
+            <div class="services-filter-content" v-if="servicesFilter">
+                Filter: <input placeholder="ID/name" />
+                <button>查找</button>
+            </div>
+            <div class="services-table">
+                <Row class="row">
+                    <Col span="20" class="services-td" >Overview</Col>
+                    <Col span="4" class="services-td" >Action</Col>
+                </Row>
+                <Row class="row">
+                    <Col span="4" class="services-td" ><strong>ID</strong></Col>
+                    <Col span="4" class="services-td" ><strong>Socket</strong></Col>
+                    <Col span="4" class="services-td" ><strong>Name</strong></Col>
+                    <Col span="4" class="services-td" ><strong>State</strong></Col>
+                    <Col span="4" class="services-td" ><strong>Comment</strong></Col>
+                    <Col span="4" class="services-td" ><strong>Access log</strong></Col>
+                </Row>
+                <Row class="row data-item" v-for="row of services.rows" :key="row.id">
+                    <Col span="4" class="services-td" >{{row.id}}</Col>
+                    <Col span="4" class="services-td" ><strong>{{row.host}}:{{row.port}}</strong></Col>
+                    <Col span="4" class="services-td" >{{row.name}}</Col>
+                    <Col span="4" class="services-td" >
+                        <Badge :status="row.state ? 'success':'error'" />
+                        {{row.state ? '正常':'断开'}}
+                    </Col>
+                    <Col span="4" class="services-td" >{{row.comment}}</Col>
+                    <Col span="4" class="services-td" >
+                        <a id="access-log" @click="logout">访问记录</a>
+                    </Col>
+                </Row>
+            </div>
+            <Card class="conn-records" dis-hover>
+                <p slot="title">
+                    <Icon type="md-checkbox-outline" />
+                    访问记录(ID: 1001)
+                    <Button shape="circle" size="small" icon="md-close" />
+                </p>
+                <div style="float:left;">
+                    <Timeline pending>
+                        <TimelineItem color="green">
+                            <p class="time">12-06 14:03:29</p>
+                            <p class="content">连接成功√</p>
+                        </TimelineItem>
+                        <TimelineItem color="red">
+                            <p class="time">12-06 13:02:07</p>
+                            <p class="content">连接断开×</p>
+                        </TimelineItem>
+                        <TimelineItem color="green">
+                            <p class="time">12-05 02:43:40</p>
+                            <p class="content">连接成功√</p>
+                        </TimelineItem>
+                        <TimelineItem color="red">
+                            <p class="time">12-04 19:11:55</p>
+                            <p class="content">连接断开×</p>
+                        </TimelineItem>
+                        <TimelineItem color="green">
+                            <p class="time">12-04 10:01:30</p>
+                            <p class="content">连接成功√</p>
+                        </TimelineItem>
+                        <TimelineItem><a href="#">查看更多...</a></TimelineItem>
+                    </Timeline>
+                </div>
+            </Card>
         </TabPane>
         <TabPane label="日志">标签三的内容</TabPane>
         <TabPane label="管理">标签三的内容</TabPane>
@@ -220,6 +298,7 @@ export default {
                 'halfYear': '最近半年'
             },
             panel1: 'traffic',
+            servicesFilter: false,
             drawerVisible: false,
             searchFields: {
                 service: 'all',
@@ -374,6 +453,19 @@ export default {
                         costTime: 32
                     };
                 })
+            },
+            services: {
+                count: 7,
+                rows: new Array(7).fill(0).map(() => {
+                    return {
+                        id: 1001,
+                        name: 'account',
+                        host: '127.0.0.1',
+                        port: 7001,
+                        state: Math.round(Math.random()),
+                        comment: '账户'
+                    }
+                })
             }
         }
     },
@@ -431,7 +523,7 @@ export default {
         }
     }
 }
-#logout,#period-a {
+#logout,#period-a,#access-log {
     background-color: #666;
     color: #fff;
     border-radius: 5px;
@@ -444,13 +536,58 @@ export default {
 }
 .tabs {
     margin: 0 32px 48px 32px;
-    .overview-pane {
-        .traffic-policing-title-w {
-            text-align: left;
-            font-size: 1.6em;
-            color: #484848;
-            line-height: 32px;
+    .top-title-w {
+        text-align: left;
+        font-size: 1.6em;
+        color: #484848;
+        line-height: 32px;
+    }
+    .services-filter-header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        height: 48px;
+        cursor: pointer;
+        text-align: left;
+    }
+    .services-filter-content {
+        display: flex;
+        height: 48px;
+        margin-left: 32px;
+        justify-content: flex-start;
+        align-items: center;
+        input {
+            margin-left: 8px;
         }
+        button {
+            font-size: 12px;
+            padding: 1.5px 6px;
+            margin-left: 8px;
+        }
+    }
+    .services-table {
+        float: left;
+        width: 640px;
+        border-left: 1px solid #ccc;
+        border-top: 1px solid #ccc;
+        .row {
+            height: 32px;
+            .services-td {
+                height: 32px;
+                line-height: 32px;
+                border-bottom: 1px solid #ccc;
+                border-right: 1px solid #ccc;
+            }
+        }
+        .data-item:nth-of-type(odd) {
+            background-color: #f0f0f0;
+            background: linear-gradient(rgba($color: #f0f0f0, $alpha: 0.4), #e0e0e0);
+        }
+    }
+    .conn-records {
+        float:left;
+        width: 300px;
+        margin: 0px 0 0 200px;
     }
 }
 #line-chart-col {
