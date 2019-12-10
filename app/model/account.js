@@ -26,7 +26,7 @@ module.exports = app => {
         },
         role: {
             type: STRING,
-            comment: '角色 root:超级管理员 frontend:前端开发 backend:后端开发 tester:测试人员 devOps:运维人员'
+            comment: '角色 root:超级管理员 frontend:前端开发人员 backend:后端开发人员 tester:测试人员 devOps:运维人员'
         }
     }, {
         comment: '账户表'
