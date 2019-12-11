@@ -6,7 +6,8 @@ class AppBootHook {
     }
 
     async willReady() {
-        // ...
+        const { app } = this;
+        app.dio = app.io.of('/');
     }
 }
 

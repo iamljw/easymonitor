@@ -708,8 +708,6 @@ export default {
             }
         }
     },
-    mounted() {
-    },
     methods: {
         logout() {
 

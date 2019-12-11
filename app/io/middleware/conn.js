@@ -3,12 +3,13 @@
 const fs = require('fs');
 const moment = require('tic-lib').moment.zhCN;
 
-module.exports = () => {
+module.exports = app => {
     return async (ctx, next) => {
         /**
          * 1. 检查服务是否存在，不存在即创建
          * 2. 服务状态变更
          * 3. 连接记录
+         * 4. 离线指令
          */
         const { serviceName, host, port, comment } = ctx.socket.handshake.query;
         let service = await ctx.model.Service.findOne({
@@ -24,10 +25,11 @@ module.exports = () => {
                 host,
                 port,
                 comment,
-                state: 1
+                state: 1,
+                socketId: ctx.socket.id
             });
         } else {
-            await service.update({ state: 1 }); // 状态置为可用
+            await service.update({ state: 1, socketId: ctx.socket.id }); // 状态置为可用
         }
         const connRecord = await ctx.model.ServiceConnRecord.create({
             sid: service.id,
@@ -35,6 +37,12 @@ module.exports = () => {
         });
         if (!fs.existsSync(`./app/logs/${serviceName}`)) {
             fs.mkdirSync(`./app/logs/${serviceName}`);
+        }
+        const { offlineMsg } = ctx.config.redisKeys;
+        const instructions = await app.redis.hget(offlineMsg, service.id);
+        if (instructions) {
+            app.dio.to(service.socketId).emit('instructions', instructions);
+            await app.redis.hdel(offlineMsg, service.id);
         }
 
         await next();

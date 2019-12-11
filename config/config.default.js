@@ -90,6 +90,17 @@ module.exports = appInfo => {
                 db: 10
             }
         },
+        redis: {
+            client: {
+                port: 6379,
+                host: '127.0.0.1',
+                password: null,
+                db: 0
+            }
+        },
+        redisKeys: {
+            offlineMsg: 'offlineMsg' // 离线消息
+        },
         consul: {
             server: {
                 host: '127.0.0.1', // 注册中心ip地址

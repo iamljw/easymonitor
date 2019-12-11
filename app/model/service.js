@@ -32,6 +32,10 @@ module.exports = app => {
             allowNull: false,
             defaultValue: 0,
             comment: '状态 0:不可用 1:可用'
+        },
+        socketId: {
+            type: STRING,
+            comment: 'socket id'
         }
     }, {
         indexes: [
