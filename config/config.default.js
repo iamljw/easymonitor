@@ -9,6 +9,7 @@ const {
 } = require('tic-lib');
 const privilege = require('./privilege');
 const rules = require('./rules');
+const sql = require('./sql');
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -144,6 +145,7 @@ module.exports = appInfo => {
         ...config,
         ...userConfig,
         privilege,
-        rules
+        rules,
+        sql
     };
 };

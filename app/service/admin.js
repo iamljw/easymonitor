@@ -2,13 +2,13 @@
 
 const { BaseService } = require('tic-lib').context;
 
-class InstructionsService extends BaseService {
+class AdminService extends BaseService {
     /**
      * 发送指令
      * @param {int} sid service id
      * @param {string} instructions 指令
      */
-    async send(sid, instructions) {
+    async sendInstructions(sid, instructions) {
         const { ctx, app, config } = this;
         const { offlineMsg } = config.redisKeys;
         const receiver = await ctx.model.service.findByPk(sid);
@@ -25,4 +25,4 @@ class InstructionsService extends BaseService {
     }
 }
 
-module.exports = InstructionsService;
+module.exports = AdminService;

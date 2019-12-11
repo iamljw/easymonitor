@@ -5,7 +5,7 @@
  */
 module.exports = app => {
     const { router, controller } = app;
-    const apiV1 = router.namespace('/api/v1/instructions');
+    const apiV1 = router.namespace('/api/v1/admin');
     // ------------ 发送指令 ------------√
-    apiV1.post('/send', controller.instructions.send);
+    apiV1.post('/instructions/send', controller.admin.sendInstructions);
 };
