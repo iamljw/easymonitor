@@ -4,7 +4,7 @@
         <div class="logo-v-w">
             <img src="../../assets/easymonitor_logo.png" alt="logo" width="240px"/>
             <span class="tag">B 1.0.0</span>
-            <span class="tag" style="marginLeft: 12px;">S 1.0.0</span>
+            <span class="tag" style="marginLeft: 12px;">S {{sversion}}</span>
         </div>
         <div class="top-r-w">
             <div>
@@ -17,7 +17,7 @@
                 </Select>
             </div>
             <div>
-                User <strong>root</strong> 超级管理员<a id="logout" class="by-btn" @click="logout">退出</a>
+                User <strong>{{self.loginName}}</strong> {{roleDict[self.role]}}<a id="logout" class="by-btn" @click="logout">退出</a>
             </div>
         </div>
     </div>
@@ -383,6 +383,7 @@
 </div>
 </template>
 <script>
+import Vue from 'vue';
 import ReqDetails from '@/components/ReqDetails'
 export default {
     name: 'Index',
@@ -402,6 +403,10 @@ export default {
         },
         this.pieChartSettings = {}
         return {
+            sversion: '1.0.0',
+            self: {
+                loginName: '未登录'
+            },
             refreshInterval: '5',
             period: '24hour',
             periodMap: {
@@ -708,9 +713,25 @@ export default {
             }
         }
     },
+    async beforeMount() {
+        if (!this.$store.state.hasLogin) {
+            this.$router.replace('/login');
+            return;
+        }
+        const res = await this.apiV1('/overview/version');
+        if (res.success) {
+            this.sversion = res.data;
+        }
+        this.self = {
+            loginName: this.$store.state.loginName,
+            role: this.$store.state.role
+        }
+    },
     methods: {
         logout() {
-
+            Vue.prototype.apiV1 = null;
+            localStorage.removeItem('token');
+            this.$router.replace('/login');
         },
         addUser() {
             console.log(this.addUserForm);

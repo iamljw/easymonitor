@@ -2,7 +2,7 @@
 
 module.exports = app => {
     const { STRING, INTEGER } = app.Sequelize;
-    const Model = app.model.define('account', {
+    const Model = app.model.define('service_conn_record', {
         id: {
             type: INTEGER,
             primaryKey: true,

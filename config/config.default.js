@@ -57,7 +57,7 @@ module.exports = appInfo => {
             port: 3306,
             username: 'root',
             password: '123456',
-            charset: 'utf8',
+            charset: 'utf8mb4',
             database: 'easymonitor',
             define: {
                 freezeTableName: true,
@@ -131,7 +131,7 @@ module.exports = appInfo => {
         secret: 'Dpj985dHt5wLaAbIz1PpaEZKP1ApUXat',
         rootAccount: {
             loginName: 'root',
-            loginPass: '123456'
+            loginPass: 'e2345678_'
         },
         timeout: 1000 * 10, // 超时响应
         // egg-error-handler
@@ -139,6 +139,10 @@ module.exports = appInfo => {
             protection: true,
             tips: '系统繁忙或者正在维护中，请稍后重试',
             ignore: [ClientError, ResourceError]
+        },
+        cors: {
+            origin: '*',
+            allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH'
         }
     };
 

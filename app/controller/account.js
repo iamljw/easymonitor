@@ -24,6 +24,17 @@ class AccountController extends BaseController {
         ctx.successful(data);
     }
     /**
+     * 获取登录信息
+     */
+    async self() {
+        const { ctx } = this;
+        const { loginName, role } = ctx.account;
+        ctx.successful({
+            loginName,
+            role
+        });
+    }
+    /**
      * 列表
      */
     async list() {

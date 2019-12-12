@@ -38,7 +38,7 @@ class StartupWorker extends Subscription {
         let { loginName, loginPass } = config.rootAccount;
         const salt = randomString({ length: 6 });
         loginPass = app.hmac(loginPass, salt);
-        await ctx.model.account.findOrCreate({
+        await ctx.model.Account.findOrCreate({
             where: {
                 role: 'root'
             },

@@ -26,12 +26,9 @@
 </template>
 
 <script>
-// import * as axios from 'axios';
-// const axiosY = axios.create({
-//     baseURL: 'http://127.0.0.1:9102/api/v1/account',
-//     timeout: 30000,
-//     headers: {'Authorization': localStorage.getItem('token')}
-// });
+import Vue from 'vue';
+import * as axios from 'axios';
+
 export default {
   name: 'Login',
   data () {
@@ -46,64 +43,105 @@ export default {
             ],
             loginPass: [
                 { required: true, message: '请输入你的密码.', trigger: 'blur' },
-                { type: 'string', min: 6, message: '密码不能小于6位', trigger: 'blur' }
+                { type: 'string', min: 8, message: '密码不能小于8位', trigger: 'blur' }
             ]
         },
         logLoading: false
     }
   },
-  mounted(){
-    //   if (localStorage.getItem('token')) {
-    //       axiosY({
-    //         method: 'get',
-    //         url: '/loginData'
-    //     })
-    //     .then(response => {
-    //         const { success, data, message } = response.data;
-    //         if (!success) {
-    //             this.$Message.error(message);
-    //         } else {
-    //             this.$store.commit('login', data);
-    //             this.$router.replace('/admin');
-    //         }
-    //     })
-    //     .catch(error => this.$Message.error(error));
-    //   }
+  async mounted() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        const apiV1 = axios.create({
+            baseURL: this.baseURL,
+            headers: {'Authorization': token},
+            timeout: 30000
+        });
+        Vue.prototype.apiV1 = apiV1;
+        apiV1.interceptors.response.use(function (response) {
+            // 对响应数据做点什么
+            const { data: res } = response;
+            if (!res.success) {
+                this.$Notice.error({
+                    title: 'Message',
+                    desc: res.message
+                });
+                if (res.code === 1004) {
+                    Vue.prototype.apiV1 = null;
+                    localStorage.removeItem('token');
+                }
+            }
+            return res;
+        }, function (error) {
+            // 对响应错误做点什么
+            this.$Notice.error({
+                title: 'Message',
+                desc: '网络错误'
+            });
+        });
+        const res = await apiV1('/account/self');
+        if (res.success) {
+            const { loginName, role } = res.data;
+            this.$store.commit('login', {
+                loginName,
+                role
+            });
+            this.$Message.success('登录成功！');
+            this.$router.replace('/');
+        }
+    } else {
+        this.$Message.info('请登录！');
+    }
   },
   methods: {
       // 登录
       login(name) {
-          this.$refs[name].validate((valid) => {
+          this.$refs[name].validate(async valid => {
               if (valid) {
                 this.logLoading = true;
-                // axiosY({
-                //     method: 'post',
-                //     url: '/login',
-                //     data: this.account
-                // })
-                // .then(response => {
-                //     const { success, data, message } = response.data;
-                //     if (!success) {
-                //         this.$Message.error(message);
-                //     } else {
-                //         const { token } = data;
-                //         localStorage.setItem('token', token);
-                //         this.$store.commit('login', data);
-                //         this.$Message.success('登录成功！');
-                //         this.$router.replace('egovernment');
-                //     }
-                // })
-                // .catch(error => this.$Message.error(error))
-                // .finally(() => this.logLoading = false);
-                setTimeout(() => {
+                const { loginName, loginPass } = this.account;
+                const res = await this.apiV1NoAuth.post('/account/login', {
+                    loginName,
+                    loginPass
+                });
+                if (res.success) {
+                    const { role, token } = res.data;
+                    localStorage.setItem('token', token);
+                    const apiV1 = axios.create({
+                        baseURL: this.baseURL,
+                        headers: {'Authorization': token},
+                        timeout: 30000
+                    });
+                    Vue.prototype.apiV1 = apiV1;
+                    apiV1.interceptors.response.use(response => {
+                        // 对响应数据做点什么
+                        const { data: res } = response;
+                        if (!res.success) {
+                            this.$Notice.error({
+                                title: 'Message',
+                                desc: res.message
+                            });
+                            if (res.code === 1004) {
+                                Vue.prototype.apiV1 = null;
+                                localStorage.removeItem('token');
+                            }
+                        }
+                        return res;
+                    },  error => {
+                        // 对响应错误做点什么
+                        this.$Notice.error({
+                            title: 'Message',
+                            desc: '网络错误'
+                        });
+                    });
                     this.$store.commit('login', {
-                        loginName: 'root',
-                        role: 'root'
+                        loginName,
+                        role
                     });
                     this.$Message.success('登录成功！');
                     this.$router.replace('/');
-                    this.logLoading = false;
-                }, 1000);
+                }
+                this.logLoading = false;
               } else {
                   this.$Message.error('输入有误!');
               }

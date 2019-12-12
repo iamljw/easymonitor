@@ -46,9 +46,8 @@ module.exports = app => {
         ],
         comment: '服务列表'
     });
-
     Model.associate = () => {
-        Model.hasMany(app.model.Policing, {
+        Model.hasMany(app.model.TrafficPolicing, {
             foreignKey: 'sid',
             constraints: false
         });

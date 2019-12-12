@@ -5,7 +5,8 @@ const {
     resourceError: {
         LoginRequiredError,
         PermissionDeniedError
-    }
+    },
+    clientError: { LogonExpirationError }
 } = require('tic-lib');
 const crypto = require('crypto');
 
@@ -38,7 +39,7 @@ module.exports = () => {
         hash.update(loginPass + salt);
         const v = hash.digest('hex');
         if (payload.hash !== v) {
-            throw new LoginRequiredError('令牌通行证已失效');
+            throw new LogonExpirationError('令牌通行证已失效');
         }
         ctx.uid = payload.uid;
         ctx.account = account;

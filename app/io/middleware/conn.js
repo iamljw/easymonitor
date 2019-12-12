@@ -39,9 +39,12 @@ module.exports = app => {
             fs.mkdirSync(`./app/logs/${serviceName}`);
         }
         const { offlineMsg } = ctx.config.redisKeys;
-        const instructions = await app.redis.hget(offlineMsg, service.id);
+        let instructions = await app.redis.hget(offlineMsg, service.id);
         if (instructions) {
-            app.dio.to(service.socketId).emit('instructions', instructions);
+            instructions = instructions.split(',');
+            for (const i of instructions) {
+                app.dio.to(service.socketId).emit(i);
+            }
             await app.redis.hdel(offlineMsg, service.id);
         }
 

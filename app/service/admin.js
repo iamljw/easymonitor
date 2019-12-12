@@ -19,7 +19,10 @@ class AdminService extends BaseService {
             }
             await app.redis.hset(offlineMsg, sid, instructions);
         } else {
-            app.dio.to(receiver.socketId).emit('instructions', instructions);
+            instructions = instructions.split(',');
+            for (const i of instructions) {
+                app.dio.to(receiver.socketId).emit(i);
+            }
         }
         return receiver.state;
     }
