@@ -23,6 +23,14 @@ class AccountController extends BaseController {
         const data = await service.account.login(loginName, loginPass);
         ctx.successful(data);
     }
+    /**
+     * 列表
+     */
+    async list() {
+        const { ctx, service } = this;
+        const data = await service.account.list();
+        ctx.successful(data);
+    }
 }
 
 module.exports = AccountController;

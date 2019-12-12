@@ -21,6 +21,16 @@ module.exports = app => {
                 queryStrParams: JSON.stringify(queryStrParams),
                 requestBody: JSON.stringify(requestBody)
             });
+            setTimeout(async () => {
+                const tp = await ctx.model.TrafficPolicing.findOne({
+                    where: {
+                        customId
+                    }
+                });
+                if (tp.status === 0) {
+                    await tp.update({ status: 1 });
+                }
+            }, app.config.timeout);
         }
         /**
          * 响应

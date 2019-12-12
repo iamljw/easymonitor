@@ -133,6 +133,7 @@ module.exports = appInfo => {
             loginName: 'root',
             loginPass: '123456'
         },
+        timeout: 1000 * 10, // 超时响应
         // egg-error-handler
         errorHandler2: {
             protection: true,

@@ -13,7 +13,10 @@ module.exports = app => {
             const {
                 name, host, port
             } = ctx.from; // 来源
-            const filename = `./app/logs/${name}/${name}.log.${moment().format('YYYY-MM-DD')}`;
+            let filename = `./app/logs/${name}/common/${name}.log.${moment().format('YYYY-MM-DD')}`;
+            if (ctx.msg.level === 'error') {
+                filename = `./app/logs/${name}/error/errors.log.${moment().format('YYYY-MM-DD')}`;
+            }
             const logger = this.getLogger(name, host, port, filename);
             logger[ctx.msg.level](ctx.msg.content);
         }

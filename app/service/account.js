@@ -72,6 +72,17 @@ class AccountService extends BaseService {
             token
         };
     }
+    /**
+     * 列表
+     */
+    async list() {
+        const { ctx } = this;
+        const res = await ctx.model.Account.findAll({
+            attributes: ['id', 'loginName', 'role'],
+            raw: true
+        });
+        return res;
+    }
 }
 
 module.exports = AccountService;
