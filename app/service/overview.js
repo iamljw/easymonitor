@@ -29,7 +29,9 @@ class OverviewService extends BaseService {
             countBySname
         } = config.sql;
         // ------------ line ------------
-        const lineData = {};
+        const line = {
+            columns: ['dt', 'total', 'timeout', 'error']
+        };
         let afterTime;
         let dateFormat;
         let displayFormat;
@@ -50,15 +52,26 @@ class OverviewService extends BaseService {
                 afterTime = moment().startOf('hours').subtract(23, 'hours')
                     .format('YYYY-MM-DD HH:mm:ss');
                 dateFormat = '%H';
+                displayFormat = '%d日%H时';
         }
-        lineData.total = await ctx.model.query(countTotal, { // 总请求次数
+        line.total = await ctx.model.query(countTotal, { // 总请求次数
             replacements: { displayFormat, dateFormat, afterTime }, type: ctx.model.QueryTypes.SELECT
         });
-        lineData.timeout = await ctx.model.query(countBySatus, { // 超时响应次数
+        line.timeout = await ctx.model.query(countBySatus, { // 超时响应次数
             replacements: { displayFormat, dateFormat, afterTime, status: 1 }, type: ctx.model.QueryTypes.SELECT
         });
-        lineData.error = await ctx.model.query(countBySatus, { // 错误请求次数
+        line.error = await ctx.model.query(countBySatus, { // 错误请求次数
             replacements: { displayFormat, dateFormat, afterTime, status: -1 }, type: ctx.model.QueryTypes.SELECT
+        });
+        line.rows = line.total.map(elem => {
+            const timeout = line.timeout.find(item => item.dt === elem.dt);
+            const error = line.error.find(item => item.dt === elem.dt);
+            return {
+                dt: elem.dt,
+                total: elem.count,
+                timeout: timeout ? timeout.count : 0,
+                error: error ? error.count : 0
+            };
         });
         let avgRes = (await ctx.model.query(avgResql, { // 平均响应时长
             replacements: { afterTime }, type: ctx.model.QueryTypes.SELECT
@@ -76,16 +89,19 @@ class OverviewService extends BaseService {
                 state: 0
             }
         });
-        const pieData = await ctx.model.query(countBySname, { // 流量占比
+        const pie = {
+            columns: ['serviceName', 'count']
+        };
+        pie.rows = await ctx.model.query(countBySname, { // 流量占比
             replacements: { afterTime }, type: ctx.model.QueryTypes.SELECT
         });
         return {
             avgRes,
-            lineData,
+            line,
             running,
             normal,
             abnormal,
-            pieData
+            pie
         };
     }
     /**

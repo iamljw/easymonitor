@@ -1,5 +1,6 @@
 <template>
 <div>
+    <span>{{row.createdAt}}</span>
     <h6>Request Headers</h6>
     <div
         class="content-w"

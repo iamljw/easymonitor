@@ -52,12 +52,13 @@
                                 <a class="by-btn" @click="drawerVisible = true" style="marginRight:8px;">
                                     {{periodMap[period]}}
                                 </a>
-                                平均响应时长<span style="fontSize:12px;marginLeft:4px;color:#19be6b">32ms</span>
+                                平均响应时长<span style="fontSize:12px;marginLeft:4px;color:#19be6b">{{chartData.avgRes}}ms</span>
                             </div>
                             <ve-line
-                                :data="lineChartData"
+                                :data="chartData.line"
                                 :extend="lineExtend"
                                 :settings="lineChartSettings"
+                                :data-empty="!chartData.line.rows.length"
                             />
                         </Col>
                         <Col span="12">
@@ -72,18 +73,19 @@
                                     异常 <strong style="fontSize:14px;color:#ed4014">1</strong>
                                 </Tag> -->
                                 <div>
-                                    运行服务 <strong style="fontSize:14px;color:#2db7f5">7</strong>
+                                    运行服务 <strong style="fontSize:14px;color:#2db7f5">{{chartData.running}}</strong>
                                 </div>
                                 <div>
-                                    正常 <strong style="fontSize:14px;color:#19be6b">6</strong>
+                                    正常 <strong style="fontSize:14px;color:#19be6b">{{chartData.normal}}</strong>
                                 </div>
                                 <div>
-                                    异常 <strong style="fontSize:14px;color:#ed4014">1</strong>
+                                    异常 <strong style="fontSize:14px;color:#ed4014">{{chartData.abnormal}}</strong>
                                 </div>
                             </div>
                             <ve-pie
-                                :data="pieChartData"
+                                :data="chartData.pie"
                                 :settings="pieChartSettings"
+                                :data-empty="!chartData.pie.rows.length"
                             />
                         </Col>
                     </Row>
@@ -115,9 +117,9 @@
                 精准搜索：
                 <Input @on-change="logout" clearable placeholder="输入请求ID" style="width:150px;marginRight:8px;" v-model="searchFields.id"/>
                 选择服务：
-                <Select v-model="searchFields.service" class="search-col" style="width:100px;marginRight:8px;">
+                <Select v-model="searchFields.sname" class="search-col" style="width:100px;marginRight:8px;">
                     <Option value="all">全部</Option>
-                    <Option v-for="val of services.rows" :value="val.id" :key="val.id">{{ val.comment || val.name }}</Option>
+                    <Option v-for="val of services.rows" :value="val.name" :key="val.id">{{ val.comment || val.name }}</Option>
                 </Select>
                 接口路径：
                 <Input @on-change="logout" clearable placeholder="输入接口路径片段" style="width:150px;marginRight:8px;" v-model="searchFields.path"/>
@@ -148,7 +150,7 @@
                 <template slot-scope="{ row }" slot="costTime">
                     <span
                         :style="{fontSize:'12px',color:row.costTime <= 1000 ? '#19be6b':'#ff9900'}"
-                    >{{row.costTime}}ms</span>
+                    >{{row.costTime || '-'}}ms</span>
                 </template>
                 <template slot-scope="{ row }" slot="action">
                     <Button type="primary" size="small" style="margin-right: 5px">{{row.zz}}重试</Button>
@@ -385,6 +387,7 @@
 <script>
 import Vue from 'vue';
 import ReqDetails from '@/components/ReqDetails'
+import querystring from 'querystring'
 export default {
     name: 'Index',
     components: {
@@ -418,7 +421,7 @@ export default {
             servicesFilter: false,
             drawerVisible: false,
             searchFields: {
-                service: 'all',
+                sname: 'all',
                 status: 'all'
             },
             markVisible: false,
@@ -443,28 +446,19 @@ export default {
                     text: '正常'
                 }
             },
-            lineChartData: {
-                columns: ['dt', 'total', 'timeout', 'error'],
-                rows: [
-                    { 'dt': '1/1', 'total': 13, 'timeout': 0, 'error': 0 },
-                    { 'dt': '1/2', 'total': 35, 'timeout': 1, 'error': 0 },
-                    { 'dt': '1/3', 'total': 29, 'timeout': 14, 'error': 0 },
-                    { 'dt': '1/4', 'total': 17, 'timeout': 3, 'error': 0 },
-                    { 'dt': '1/5', 'total': 37, 'timeout': 0, 'error': 8 },
-                    { 'dt': '1/6', 'total': 45, 'timeout': 2, 'error': 0 }
-                ]
-            },
-            pieChartData: {
-                columns: ['serviceName', 'count'],
-                rows: [
-                    { 'serviceName': 'api-account', 'count': 1393 },
-                    { 'serviceName': 'api-integral', 'count': 3530 },
-                    { 'serviceName': 'api-wallet', 'count': 2923 },
-                    { 'serviceName': 'api-market', 'count': 723 },
-                    { 'serviceName': 'api-pyramid', 'count': 3792 },
-                    { 'serviceName': 'api-blockchain', 'count': 4593 },
-                    { 'serviceName': 'api-msg', 'count': 459 }
-                ]
+            chartData: {
+                avgRes: 0,
+                running: 0,
+                normal: 0,
+                abnormal: 0,
+                line: {
+                    columns: ['dt', 'total', 'timeout', 'error'],
+                    rows: []
+                },
+                pie: {
+                    columns: ['serviceName', 'count'],
+                    rows: []
+                }
             },
             columns: [
                 {
@@ -544,32 +538,8 @@ export default {
                 }
             ],
             requestData: {
-                count: 213,
-                rows: new Array(10).fill(0).map(() => {
-                    return {
-                        id: 423982,
-                        sid: 1,
-                        sname: '积分',
-                        method: 'get',
-                        path: '/api/v1/market/eth/price/test/asd/dddd',
-                        headers: `{
-                            "Authorization":"sadkh123kj1223zzkxj",
-                            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.84 Safari/537.36"
-                        }`,
-                        queryStrParams: '{"page":1,"size":10}',
-                        requestBody: '{"name":"张三","age":23}',
-                        status: 2,
-                        responseBody: `{
-                            "success":true,
-                            "code": 200,
-                            "data":{
-                                "count":0,
-                                "rows":[]
-                            }
-                        }`,
-                        costTime: 32
-                    };
-                })
+                count: 0,
+                rows: []
             },
             services: {
                 count: 7,
@@ -726,8 +696,43 @@ export default {
             loginName: this.$store.state.loginName,
             role: this.$store.state.role
         }
+        this.$Notice.info({
+            title: '安全提醒',
+            duration: 0,
+            render: h => {
+                return h('span', [
+                    '建议在生产环境下仅保留',
+                    h('a', '超管'),
+                    '和',
+                    h('a', '运维'),
+                    '账号'
+                ])
+            }
+        });
+    },
+    mounted() {
+        this._fetch();
     },
     methods: {
+        _fetch() {
+            this.apiV1('/overview/chart').then(res => {
+                if (res.success) {
+                    this.chartData = res.data;
+                }
+            })
+            const searchFields = this.searchFields;
+            const params1 = querystring.stringify({
+                id: searchFields.id,
+                sname: searchFields.sname === 'all' ? undefined : searchFields.sname,
+                path: searchFields.path,
+                status: searchFields.status === 'all' ? undefined : searchFields.status
+            });
+            this.apiV1('/overview/reqList?' + params1).then(res => {
+                if (res.success) {
+                    this.requestData = res.data;
+                }
+            })
+        },
         logout() {
             Vue.prototype.apiV1 = null;
             localStorage.removeItem('token');
@@ -752,7 +757,7 @@ export default {
         },
         resetSearch() {
             this.searchFields = {
-                service: 'all',
+                sname: 'all',
                 status: 'all'
             };
         },

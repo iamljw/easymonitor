@@ -4,7 +4,7 @@ module.exports = {
     countTotal: `
         SELECT
             count( id ) AS count,
-            date_format( dt, :displayFormat ) AS dt 
+            date_format( createdAt, :displayFormat ) AS dt 
         FROM
             traffic_policing 
         WHERE
@@ -15,7 +15,7 @@ module.exports = {
     countBySatus: `
         SELECT
             count( id ) AS count,
-            date_format( dt, :displayFormat ) AS dt 
+            date_format( createdAt, :displayFormat ) AS dt 
         FROM
             traffic_policing 
         WHERE

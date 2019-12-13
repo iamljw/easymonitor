@@ -2,12 +2,15 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import VCharts from 'v-charts'
+import VeLine from 'v-charts/lib/line.common'
+import VePie from 'v-charts/lib/pie.common'
+import 'v-charts/lib/style.css'
 import './plugins/iview.js'
 import './global'
 
 Vue.config.productionTip = false
-Vue.use(VCharts)
+Vue.component(VeLine.name, VeLine)
+Vue.component(VePie.name, VePie)
 
 new Vue({
   router,
