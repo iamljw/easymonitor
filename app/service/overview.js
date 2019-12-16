@@ -118,7 +118,7 @@ class OverviewService extends BaseService {
         const { Op } = app.Sequelize;
         const opts = {};
         if (reqId) {
-            opts.reqId = reqId;
+            opts.id = reqId;
         }
         if (sname) {
             opts.sname = sname;
@@ -127,7 +127,7 @@ class OverviewService extends BaseService {
             opts.status = status;
         }
         if (path) {
-            opts.status = {
+            opts.path = {
                 [Op.like]: `%${path}%`
             };
         }

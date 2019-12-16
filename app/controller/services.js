@@ -8,7 +8,8 @@ class ServicesController extends BaseController {
      */
     async list() {
         const { ctx, service } = this;
-        const data = await service.services.list();
+        const { kw } = ctx.query;
+        const data = await service.services.list(kw);
         ctx.successful(data);
     }
     /**

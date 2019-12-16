@@ -96,7 +96,7 @@
                 placement="left"
                 :closable="true"
                 v-model="drawerVisible">
-                <RadioGroup v-model="period" vertical>
+                <RadioGroup v-model="period" vertical @on-change="onPriodChange">
                     <Radio label="24hour">
                         <!-- <Icon type="social-apple"></Icon> -->
                         <span>最近24小时</span>
@@ -115,22 +115,22 @@
             <!-- 搜索栏 id、服务、接口、响应状态 -->
             <div class="search-con" style="marginTop:0;">
                 精准搜索：
-                <Input @on-change="logout" clearable placeholder="输入请求ID" style="width:150px;marginRight:8px;" v-model="searchFields.id"/>
+                <Input clearable placeholder="输入请求ID" style="width:150px;marginRight:8px;" v-model="searchFields.reqId"/>
                 选择服务：
-                <Select v-model="searchFields.sname" class="search-col" style="width:100px;marginRight:8px;">
+                <Select v-model="searchFields.sname" class="search-col" style="width:100px;marginRight:8px;" @on-change="_fetchList">
                     <Option value="all">全部</Option>
                     <Option v-for="val of services.rows" :value="val.name" :key="val.id">{{ val.comment || val.name }}</Option>
                 </Select>
                 接口路径：
-                <Input @on-change="logout" clearable placeholder="输入接口路径片段" style="width:150px;marginRight:8px;" v-model="searchFields.path"/>
+                <Input clearable placeholder="输入接口路径片段" style="width:150px;marginRight:8px;" v-model="searchFields.path"/>
                 响应状态：
-                <Select v-model="searchFields.status" class="search-col" style="width:100px;marginRight:8px;">
+                <Select v-model="searchFields.status" class="search-col" style="width:100px;marginRight:8px;" @on-change="_fetchList">
                     <Option value="all">全部</Option>
                     <Option v-for="(val,key) in reqStatus" :value="Number(key)" :key="`search-col-${key}`">
                         {{ val.text }}
                     </Option>
                 </Select>
-                <Button @click="logout" class="search-btn" type="primary"><Icon type="md-search" />&nbsp;&nbsp;搜索</Button>
+                <Button @click="_fetchList" class="search-btn" type="primary"><Icon type="md-search" />&nbsp;&nbsp;搜索</Button>
                 <Button @click="resetSearch" class="search-btn" type="primary" style="marginLeft:8px;">重置</Button>
             </div>
             <Table
@@ -158,12 +158,12 @@
                 </template>
             </Table>
             <!-- 分页 -->
-            <Page :total="requestData.count" @on-change="pageChange" show-elevator show-total style="marginTop:10px;text-align:center;"/>
+            <Page :total="requestData.count" @on-change="pageChange" show-elevator show-total style="marginTop:24px;text-align:center;"/>
             <!-- 标记编辑框 -->
             <Modal
                 v-model="markVisible"
                 :title="`标记请求(ID:${tmpReq.id})`"
-                @on-ok="markVisible = false"
+                @on-ok="onMarkOk"
                 @on-cancel="markVisible = false">
                 响应状态:
                 <Select v-model="tmpStatus" style="width:100px;">
@@ -201,11 +201,11 @@
             <div class="collapse-header" @click="servicesFilter = !servicesFilter">
                 <Icon v-if="!servicesFilter" type="md-arrow-dropright" size="22" color="#808695"/>
                 <Icon v-else type="md-arrow-dropdown" size="22" color="#808695"/>
-                All services ({{services.count}})
+                All services ({{servicesList.count}})
             </div>
             <div class="services-filter-content" v-if="servicesFilter">
-                Filter: <input placeholder="ID/name" />
-                <button>查找</button>
+                Filter: <input placeholder="ID/name" v-model="servicesKw"/>
+                <button @click="_fetchServices">查找</button>
             </div>
             <div class="diy-table" style="float: left;">
                 <Row class="row">
@@ -220,7 +220,7 @@
                     <Col span="4" class="diy-table-td" ><strong>Comment</strong></Col>
                     <Col span="4" class="diy-table-td" ><strong>Access log</strong></Col>
                 </Row>
-                <Row class="row data-item" v-for="row of services.rows" :key="row.id">
+                <Row class="row data-item" v-for="row of servicesList.rows" :key="row.id">
                     <Col span="4" class="diy-table-td" >{{row.id}}</Col>
                     <Col span="4" class="diy-table-td" ><strong>{{row.host}}:{{row.port}}</strong></Col>
                     <Col span="4" class="diy-table-td" >{{row.name}}</Col>
@@ -230,38 +230,28 @@
                     </Col>
                     <Col span="4" class="diy-table-td" >{{row.comment}}</Col>
                     <Col span="4" class="diy-table-td" >
-                        <a class="by-btn" @click="logout">访问记录</a>
+                        <a class="by-btn" @click="onAccessClick(row.id)">访问记录</a>
                     </Col>
                 </Row>
             </div>
-            <Card class="conn-records" dis-hover>
+            <Card class="conn-records" dis-hover v-if="connRecordsVisible">
                 <p slot="title">
                     <Icon type="md-checkbox-outline" />
-                    访问记录(ID: 1001)
-                    <Button shape="circle" size="small" icon="md-close" />
+                    访问记录(ID: {{accessLog.sid}})
+                    <Button shape="circle" size="small" icon="md-close" @click="connRecordsVisible = false"/>
                 </p>
                 <div style="float:left;">
                     <Timeline pending>
-                        <TimelineItem color="green">
-                            <p class="time">12-06 14:03:29</p>
-                            <p class="content">连接成功√</p>
-                        </TimelineItem>
-                        <TimelineItem color="red">
-                            <p class="time">12-06 13:02:07</p>
-                            <p class="content">连接断开×</p>
-                        </TimelineItem>
-                        <TimelineItem color="green">
-                            <p class="time">12-05 02:43:40</p>
-                            <p class="content">连接成功√</p>
-                        </TimelineItem>
-                        <TimelineItem color="red">
-                            <p class="time">12-04 19:11:55</p>
-                            <p class="content">连接断开×</p>
-                        </TimelineItem>
-                        <TimelineItem color="green">
-                            <p class="time">12-04 10:01:30</p>
-                            <p class="content">连接成功√</p>
-                        </TimelineItem>
+                        <div v-for="row of accessLog.rows" :key="row.id">
+                            <TimelineItem color="red" v-if="row.disconntime">
+                                <p class="time">{{moment(row.disconntime).format('YYYY-MM-DD HH:mm:ss')}}</p>
+                                <p class="content">连接断开×</p>
+                            </TimelineItem>
+                            <TimelineItem color="green">
+                                <p class="time">{{moment(row.conntime).format('YYYY-MM-DD HH:mm:ss')}}</p>
+                                <p class="content">连接成功√</p>
+                            </TimelineItem>
+                        </div>
                         <TimelineItem><a href="#">查看更多...</a></TimelineItem>
                     </Timeline>
                 </div>
@@ -424,6 +414,7 @@ export default {
                 sname: 'all',
                 status: 'all'
             },
+            servicesKw: '',
             markVisible: false,
             tmpReq: {},
             tmpStatus: 2,
@@ -542,17 +533,18 @@ export default {
                 rows: []
             },
             services: {
-                count: 7,
-                rows: new Array(7).fill(0).map(() => {
-                    return {
-                        id: Math.round(Math.random() * 10000),
-                        name: 'account',
-                        host: '127.0.0.1',
-                        port: 7001,
-                        state: Math.round(Math.random()),
-                        comment: '账户'
-                    }
-                })
+                count: 0,
+                rows: []
+            },
+            servicesList: {
+                count: 0,
+                rows: []
+            },
+            connRecordsVisible: false,
+            accessLog: {
+                sid: null,
+                count: 0,
+                rows: []
             },
             treeData: [
                 {
@@ -715,17 +707,26 @@ export default {
     },
     methods: {
         _fetch() {
-            this.apiV1('/overview/chart').then(res => {
+            this._fetchChart();
+            this._fetchList();
+            this._fetchServices();
+            this._fetchServices(false);
+        },
+        _fetchChart() {
+            this.apiV1('/overview/chart?period=' + this.period).then(res => {
                 if (res.success) {
                     this.chartData = res.data;
                 }
             })
+        },
+        _fetchList() {
             const searchFields = this.searchFields;
             const params1 = querystring.stringify({
-                id: searchFields.id,
+                reqId: searchFields.reqId,
                 sname: searchFields.sname === 'all' ? undefined : searchFields.sname,
                 path: searchFields.path,
-                status: searchFields.status === 'all' ? undefined : searchFields.status
+                status: searchFields.status === 'all' ? undefined : searchFields.status,
+                page: searchFields.page
             });
             this.apiV1('/overview/reqList?' + params1).then(res => {
                 if (res.success) {
@@ -733,10 +734,37 @@ export default {
                 }
             })
         },
+        _fetchServices(flag = true) {
+            let url = '/services/list'
+            if (flag) {
+                url += `?kw=${this.servicesKw}`
+            }
+            this.apiV1(url).then(res => {
+                if (res.success) {
+                    if (flag) {
+                        this.servicesList = res.data;
+                    } else {
+                        this.services = res.data;
+                    }
+                }
+            });
+        },
+        onPriodChange(period) {
+            this.period = period;
+            this._fetchChart();
+        },
         logout() {
             Vue.prototype.apiV1 = null;
             localStorage.removeItem('token');
             this.$router.replace('/login');
+        },
+        onAccessClick(sid) {
+            this.apiV1('/services/accessLog?sid=' + sid).then(res => {
+                if (res.success) {
+                    this.accessLog = res.data;
+                    this.connRecordsVisible = true;
+                }
+            });
         },
         addUser() {
             console.log(this.addUserForm);
@@ -752,8 +780,21 @@ export default {
             this.tmpReq = row;
             this.markVisible = true;
         },
-        pageChange() {
-
+        onMarkOk() {
+            this.apiV1.post('/overview/mark', {
+                reqId: this.tmpReq.id,
+                status: this.tmpStatus,
+                comment: this.reqComment
+            }).then(res => {
+                if (res.success) {
+                    this.$Message.success('标记成功');
+                    this._fetchList();
+                }
+            });
+        },
+        pageChange(page) {
+            this.searchFields.page = page;
+            this._fetchList();
         },
         resetSearch() {
             this.searchFields = {

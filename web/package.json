@@ -12,6 +12,7 @@
     "core-js": "^3.4.3",
     "countup": "^1.8.2",
     "echarts": "^4.5.0",
+    "moment": "^2.24.0",
     "v-charts": "^1.19.0",
     "view-design": "^4.0.2",
     "vue": "^2.6.10",

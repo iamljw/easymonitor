@@ -43,13 +43,14 @@ class ServicesService extends BaseService {
             offset: page - 1 < 0 ? 0 : (page - 1) * size,
             limit: size,
             order: [
-                ['createdAt', 'desc']
+                ['conntime', 'desc']
             ],
             where: {
                 sid
             },
             raw: true
         });
+        res.sid = sid;
         return res;
     }
 }

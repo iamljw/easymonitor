@@ -1,6 +1,11 @@
 import Vue from 'vue';
 import * as axios from 'axios';
 
+import moment from 'moment';
+
+moment.locale('zh_CN');
+Vue.prototype.moment = moment;
+
 const baseURL = 'http://127.0.0.1:6300/api/v1/';
 
 Vue.prototype.baseURL = baseURL;

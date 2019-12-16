@@ -1,6 +1,10 @@
 <template>
 <div>
     <span>{{row.createdAt}}</span>
+    <h6>Comment</h6>
+    <div class="content-w">
+        {{row.comment}}
+    </div>
     <h6>Request Headers</h6>
     <div
         class="content-w"

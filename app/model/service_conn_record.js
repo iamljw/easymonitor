@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = app => {
-    const { STRING, INTEGER } = app.Sequelize;
+    const { INTEGER, DATE } = app.Sequelize;
     const Model = app.model.define('service_conn_record', {
         id: {
             type: INTEGER,
@@ -15,15 +15,16 @@ module.exports = app => {
             comment: '服务id'
         },
         conntime: {
-            type: STRING,
+            type: DATE,
             allowNull: false,
             comment: '连接时间'
         },
         disconntime: {
-            type: STRING(6),
+            type: DATE,
             comment: '断开时间'
         }
     }, {
+        timestamps: false,
         comment: '服务连接记录表'
     });
 
